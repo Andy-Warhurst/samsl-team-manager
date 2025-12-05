@@ -1,0 +1,29 @@
+
+.player-container {
+    background-color: darkgray;
+    border-radius: 5px;
+    horiz-align: left;
+    width: 360px;
+    flex-wrap: nowrap;
+}
+.player-selector-table {
+}
+
+.player-row {
+    background-color: lightgray;
+    width: 300px;
+}
+.player-checkbox {
+    min-width: 30px;
+    min-height: 30px;
+    background-color: skyblue;
+}
+.player-name {
+    color: darkblue;
+    min-width: 240px;
+    font-size: medium;
+}
+.player-shirt {
+    font-size: medium;
+    width: 40px;
+}
