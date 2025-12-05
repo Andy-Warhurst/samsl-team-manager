@@ -1,14 +1,14 @@
 import {useAuth0} from "@auth0/auth0-react";
 import * as React from "react";
-import MyTeam from "./MyTeam";
+import MyTeam from "./features/squads/MyTeam";
 import {useEffect, useState} from "react";
-import {useFixtures} from "./FixtureContext";
-import {useData} from "./DataContext";
-import TeamsDropdown from "./TeamsDropdown";
-import FixtureDropdown from "./FixtureDropdown";
+import {useFixtures} from "./features/fixtures/FixtureContext";
+import {useData} from "./features/squads/DataContext";
+import TeamsDropdown from "./features/squads/TeamsDropdown";
+import FixtureDropdown from "./features/fixtures/FixtureDropdown";
 // import rego from "./assets/SAMSL_Register.png";
-import {useGuests} from "./GuestContext";
-import {usePlayers} from "./PlayerContext";
+import {useGuests} from "./features/squads/GuestContext";
+import {usePlayers} from "./features/squads/PlayerContext";
 
 function Home() {
     const {isAuthenticated, user} = useAuth0();

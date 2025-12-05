@@ -1,6 +1,6 @@
 import './Header.css';
-import LoginButton from "./LoginButton";
-import LogoutButton from "./LogoutButton";
+import LoginButton from "../shared/components/LoginButton";
+import LogoutButton from "../shared/components/LogoutButton";
 import { useAuth0 } from "@auth0/auth0-react";
 // import logo from "./assets/SAMSL_Official_Logo.svg";
 import Banner from "./Banner";

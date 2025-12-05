@@ -4,7 +4,7 @@ import {
     addGuest,
     updateGuest,
     deleteGuest
-} from './GuestService';
+} from '../../shared/api/GuestService';
 
 const GuestContext = createContext();
 

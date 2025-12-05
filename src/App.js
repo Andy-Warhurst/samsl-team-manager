@@ -3,16 +3,16 @@ import Home  from './Home';
 import About from './About';
 import Services from './Services';
 import ErrorPage from './ErrorPage';
-import Guests from './Guests';
-import AuthenticationGuard from './authentication-guard';
-import PrintTeamsheet from './PrintTeamsheet';
+import Guests from './features/squads/Guests';
+import AuthenticationGuard from './auth/authentication-guard';
+import PrintTeamsheet from './features/squads/PrintTeamsheet';
 
-import { FixtureProvider } from './FixtureContext';
-import { PlayerProvider  } from './PlayerContext';
-import { GuestProvider   } from './GuestContext';
-import { DataProvider    } from './DataContext';
+import { FixtureProvider } from './features/fixtures/FixtureContext';
+import { PlayerProvider  } from './features/squads/PlayerContext';
+import { GuestProvider   } from './features/squads/GuestContext';
+import { DataProvider    } from './features/squads/DataContext';
 
-import Layout from './components/Layout/Layout';
+import AppLayout from './layouts/AppLayout';
 
 function App() {
     return (
@@ -21,7 +21,7 @@ function App() {
                 <GuestProvider>
                     <DataProvider>
                         <Router>
-                            <Layout>
+                            <AppLayout>
                                 <Routes>
                                     <Route path="/home"     element={<Home />} />
                                     <Route path="/about"    element={<About />} />
@@ -34,7 +34,7 @@ function App() {
                                     <Route path="/"         element={<Home />} />
                                     <Route path="*"         element={<ErrorPage />} />
                                 </Routes>
-                            </Layout>
+                            </AppLayout>
                         </Router>
                     </DataProvider>
                 </GuestProvider>

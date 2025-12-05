@@ -4,7 +4,7 @@ import {
     addFixture,
     updateFixture,
     deleteFixture
-} from './FixtureService';
+} from '../../shared/api/FixtureService';
 
 const FixtureContext = createContext();
 

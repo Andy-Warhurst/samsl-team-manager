@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
-import "./Guests.css";
+import "../../Guests.css";
 import InputGroup from "react-bootstrap/InputGroup";
 import FormControl from "react-bootstrap/FormControl";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import { useData } from "./DataContext";
 import { useGuests } from './GuestContext';
-import EditableNumberButton from "./EditableNumberButton";
+import EditableNumberButton from "../../shared/components/EditableNumberButton";
 
 function Guests() {
 

@@ -1,11 +1,11 @@
 
 import React, { useEffect, useCallback } from 'react';
 import { PDFDocument, rgb } from 'pdf-lib';
-import sampleImage from './assets/SAMSL-logo.png';
+import sampleImage from '../../assets/SAMSL-logo.png';
 import { useData } from "./DataContext";
-import { extractFixturesByRound } from "./Fixtures";
-import { useFixtures } from "./FixtureContext";
-import './Styles.css';
+import { extractFixturesByRound } from "../fixtures/FixturesUtils";
+import { useFixtures } from "../fixtures/FixtureContext";
+import '../../Styles.css';
 import Button from "react-bootstrap/Button";
 
 const PrintTeamsheet = () => {

@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
     fetchAllUserTeams,
-} from './DataService';
-import Round from "./Round";
+} from '../../shared/api/DataService';
+import Round from "../fixtures/Round";
 
 const DataContext = createContext();
 

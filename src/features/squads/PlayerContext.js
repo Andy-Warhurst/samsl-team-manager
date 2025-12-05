@@ -5,7 +5,7 @@ import {
     addPlayer,
     updatePlayer,
     deletePlayer
-} from './PlayerService';
+} from '../../shared/api/PlayerService';
 
 const PlayerContext = createContext();
 

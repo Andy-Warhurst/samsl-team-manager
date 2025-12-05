@@ -1,9 +1,9 @@
 import React from 'react';
-import Header from '../../Header';
+import Header from './Header';
 // import NavBar from '../../NavBar';
-import './Layout.css';
+import './AppLayout.css';
 
-export default function Layout({ children }) {
+export default function AppLayout({ children }) {
     return (
         <div className="layout">
             <header className="layout__header">
