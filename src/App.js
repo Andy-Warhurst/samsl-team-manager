@@ -1,18 +1,25 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home  from './Home';
-import About from './About';
-import Services from './Services';
-import ErrorPage from './ErrorPage';
-import Guests from './features/squads/Guests';
-import AuthenticationGuard from './auth/authentication-guard';
-import PrintTeamsheet from './features/squads/PrintTeamsheet';
+// src/App.js
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import { FixtureProvider } from './features/fixtures/FixtureContext';
-import { PlayerProvider  } from './features/squads/PlayerContext';
-import { GuestProvider   } from './features/squads/GuestContext';
-import { DataProvider    } from './features/squads/DataContext';
+import Home from "./Home";
+import About from "./About";
+import Services from "./Services";
+import ErrorPage from "./ErrorPage";
+import Guests from "./features/squads/Guests";
+// import PrintTeamsheet from "./features/squads/PrintTeamsheet";
 
-import AppLayout from './layouts/AppLayout';
+import AuthenticationGuard from "./auth/authentication-guard";
+
+import { FixtureProvider } from "./features/fixtures/FixtureContext";
+import { PlayerProvider } from "./features/squads/PlayerContext";
+import { GuestProvider } from "./features/squads/GuestContext";
+import { DataProvider } from "./features/squads/DataContext";
+
+import Layout from "./layouts/AppLayout";
+
+// NEW: referee bits
+import { RefereeProvider } from "./features/matchEvents/RefereeContext";
+import RefereeDashboard from "./features/matchEvents/RefereeDashboard";
 
 function App() {
     return (
@@ -20,22 +27,36 @@ function App() {
             <PlayerProvider>
                 <GuestProvider>
                     <DataProvider>
-                        <Router>
-                            <AppLayout>
-                                <Routes>
-                                    <Route path="/home"     element={<Home />} />
-                                    <Route path="/about"    element={<About />} />
-                                    <Route path="/guests"   element={<Guests />} />
-                                    <Route path="/print"    element={<PrintTeamsheet />} />
-                                    <Route
-                                        path="/services"
-                                        element={<AuthenticationGuard component={Services} />}
-                                    />
-                                    <Route path="/"         element={<Home />} />
-                                    <Route path="*"         element={<ErrorPage />} />
-                                </Routes>
-                            </AppLayout>
-                        </Router>
+                        <RefereeProvider>
+                            <div className="App">
+                                <Router>
+                                    <Layout>
+                                        <Routes>
+                                            {/* Main app routes */}
+                                            <Route path="/" element={<Home />} />
+                                            <Route path="/home" element={<Home />} />
+                                            <Route path="/about" element={<About />} />
+                                            <Route path="/services" element={
+                                                <AuthenticationGuard component={Services} />
+                                            } />
+                                            <Route path="/guests" element={<Guests />} />
+
+                                            {/* NEW: referee routes */}
+                                            <Route path="/raw-ref" element={<RefereeDashboard />} />
+                                            <Route
+                                                path="/ref"
+                                                element={
+                                                    <AuthenticationGuard component={RefereeDashboard} />
+                                                }
+                                            />
+
+                                            {/* Fallback */}
+                                            <Route path="*" element={<ErrorPage />} />
+                                        </Routes>
+                                    </Layout>
+                                </Router>
+                            </div>
+                        </RefereeProvider>
                     </DataProvider>
                 </GuestProvider>
             </PlayerProvider>
@@ -44,60 +65,3 @@ function App() {
 }
 
 export default App;
-
-// import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-// import Home  from './Home'
-// import About from './About'
-// import Services from './Services'
-// import Header from './Header';
-// import NavBar from './NavBar';
-// import ErrorPage from './ErrorPage';
-// import Guests from "./Guests";
-// import AuthenticationGuard from './authentication-guard';
-// import PrintTeamsheet from "./PrintTeamsheet";
-// import { DataProvider } from './DataContext';
-// import {GuestProvider} from "./GuestContext";
-// import {FixtureProvider} from "./FixtureContext";
-// import {PlayerProvider} from "./PlayerContext";
-//
-// function App() {
-//
-//     return (
-//         <div>
-//             <FixtureProvider>
-//                 <PlayerProvider>
-//                     <GuestProvider>
-//                         <DataProvider>
-//                             <Router>
-//                                 <div style={{display: 'flex', flexDirection: 'column', height: '100vh'}}>
-//
-//                                     <Header/>
-//                                     <div style={{display: 'flex', flexGrow: 1}}>
-//                                         <div style={{ width: '200px', background: '#f0f0f0' }}><NavBar /></div>
-//                                         <div style={{ width: '800px', background: '#f8f8f8'}}>
-//                                             <Routes>
-//                                                 <Route path="/home" element={<Home/>} />
-//                                                 <Route path="/about" element={<About />} />
-//                                                 <Route path="/guests" element={<Guests />} />
-//                                                 <Route path="/print" element={<PrintTeamsheet />} />
-//                                                 <Route
-//                                                     path="/services"
-//                                                     element={<AuthenticationGuard component={Services} />}
-//                                                 />
-//                                                 <Route path="/" element={<Home />} />
-//                                                 <Route path="*" element={<ErrorPage />} />
-//                                             </Routes>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             </Router>
-//                         </DataProvider>
-//
-//                     </GuestProvider>
-//                 </PlayerProvider>
-//             </FixtureProvider>
-//         </div>
-//     );
-// }
-//
-// export default App;

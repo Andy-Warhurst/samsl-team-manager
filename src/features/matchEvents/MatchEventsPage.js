@@ -1,0 +1,328 @@
+// src/features/matchEvents/MatchEventsPage.js
+import React, { useMemo, useState } from "react";
+import { useReferee } from "./RefereeContext";
+import "./matchEvents.css";
+
+const EVENT_TYPES = [
+    { value: "GOAL", label: "Goal" },
+    { value: "YELLOW_CARD", label: "Yellow card" },
+    { value: "RED_CARD", label: "Red card" },
+    { value: "INJURY", label: "Injury" },
+];
+
+function MatchEventsPage() {
+    const {
+        currentFixture,
+        teamSelections,
+        matchEvents,
+        loading,
+        saving,
+        error,
+        selectFixture,
+        lockSelections,
+        addOrUpdateEvent,
+        removeEvent,
+        sendConfirmationRequests,
+        submitReport,
+    } = useReferee();
+
+    const [formState, setFormState] = useState({
+        id: null,
+        eventType: "GOAL",
+        team: "HOME",
+        playerName: "",
+        minute: "",
+        note: "",
+    });
+
+    const canSubmitReport = useMemo(() => {
+        if (!currentFixture) return false;
+        // Adjust these property names to match your API
+        const homeConfirmed = currentFixture.homeConfirmed;
+        const awayConfirmed = currentFixture.awayConfirmed;
+        return homeConfirmed && awayConfirmed;
+    }, [currentFixture]);
+
+    if (!currentFixture) {
+        return (
+            <div className="referee-screen">
+                <p>No fixture selected.</p>
+                <button
+                    className="primary-button"
+                    onClick={() => selectFixture(null)}
+                >
+                    Back to fixtures
+                </button>
+            </div>
+        );
+    }
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormState((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmitEvent = async (e) => {
+        e.preventDefault();
+        if (!formState.eventType || !formState.team || !formState.minute) {
+            return;
+        }
+        const payload = {
+            id: formState.id,
+            type: formState.eventType,
+            team: formState.team,
+            playerName: formState.playerName || null,
+            minute: parseInt(formState.minute, 10),
+            note: formState.note || null,
+        };
+        await addOrUpdateEvent(payload);
+        // Clear form (keep eventType/team for speed)
+        setFormState((prev) => ({
+            id: null,
+            eventType: prev.eventType,
+            team: prev.team,
+            playerName: "",
+            minute: "",
+            note: "",
+        }));
+    };
+
+    const handleEditEvent = (event) => {
+        setFormState({
+            id: event.id,
+            eventType: event.type,
+            team: event.team,
+            playerName: event.playerName || "",
+            minute: String(event.minute || ""),
+            note: event.note || "",
+        });
+    };
+
+    const handleBack = () => {
+        selectFixture(null);
+    };
+
+    const isLocked = !!(teamSelections && teamSelections.isLocked);
+
+    return (
+        <div className="referee-screen">
+            <header className="match-header">
+                <button className="secondary-button" onClick={handleBack}>
+                    Back
+                </button>
+                <div className="match-header-centre">
+                    <div className="fixture-teams">
+                        {currentFixture.hometeam} vs {currentFixture.awayteam}
+                    </div>
+                    <div className="fixture-meta">
+                        <span>{currentFixture.date}</span>
+                        <span>{currentFixture.time}</span>
+                        {currentFixture.venue && <span>@ {currentFixture.venue}</span>}
+                    </div>
+                </div>
+            </header>
+
+            {loading && <p>Loading match data…</p>}
+            {error && <p className="error-text">{error}</p>}
+
+            {/* Team selections */}
+            <section className="card">
+                <div className="card-header">
+                    <h2>Team selections</h2>
+                    {!isLocked && (
+                        <button
+                            className="primary-button"
+                            disabled={saving}
+                            onClick={lockSelections}
+                        >
+                            Lock team sheets
+                        </button>
+                    )}
+                    {isLocked && <span className="badge badge-locked">Locked</span>}
+                </div>
+                {teamSelections ? (
+                    <div className="team-selections">
+                        <div className="team-column">
+                            <h3>{teamSelections.homeTeamName || currentFixture.hometeam}</h3>
+                            <ul>
+                                {(teamSelections.homePlayers || []).map((p) => {
+                                    const number = p.shirtno ?? p.shirtNumber ?? p.shirt_no ?? "";
+                                    return (
+                                        <li key={p.id || p.playerId}>
+                                            {number} {p.name}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                        <div className="team-column">
+                            <h3>{teamSelections.awayTeamName || currentFixture.awayteam}</h3>
+                            <ul>
+                                {(teamSelections.awayPlayers || []).map((p) => {
+                                    const number = p.shirtno ?? p.shirtNumber ?? p.shirt_no ?? "";
+                                    return (
+                                        <li key={p.id || p.playerId}>
+                                            {number} {p.name}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    </div>
+                ) : (
+                    <p>No team selections available.</p>
+                )}
+            </section>
+
+            {/* Event entry */}
+            <section className="card">
+                <div className="card-header">
+                    <h2>Match events</h2>
+                </div>
+                <form className="event-form" onSubmit={handleSubmitEvent}>
+                    <div className="event-form-row">
+                        <label>
+                            Event
+                            <select
+                                name="eventType"
+                                value={formState.eventType}
+                                onChange={handleChange}
+                            >
+                                {EVENT_TYPES.map((type) => (
+                                    <option key={type.value} value={type.value}>
+                                        {type.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+
+                        <label>
+                            Team
+                            <select
+                                name="team"
+                                value={formState.team}
+                                onChange={handleChange}
+                            >
+                                <option value="HOME">
+                                    {teamSelections?.homeTeamName || currentFixture.hometeam}
+                                </option>
+                                <option value="AWAY">
+                                    {teamSelections?.awayTeamName || currentFixture.awayteam}
+                                </option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div className="event-form-row">
+                        <label>
+                            Player
+                            <input
+                                name="playerName"
+                                value={formState.playerName}
+                                onChange={handleChange}
+                                placeholder="Name or shirt number"
+                            />
+                        </label>
+
+                        <label>
+                            Minute
+                            <input
+                                name="minute"
+                                type="number"
+                                min="0"
+                                max="130"
+                                value={formState.minute}
+                                onChange={handleChange}
+                                placeholder="e.g. 42"
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    <label className="event-note">
+                        Note
+                        <input
+                            name="note"
+                            value={formState.note}
+                            onChange={handleChange}
+                            placeholder="Optional note"
+                        />
+                    </label>
+
+                    <button
+                        type="submit"
+                        className="primary-button full-width"
+                        disabled={saving}
+                    >
+                        {formState.id ? "Update event" : "Add event"}
+                    </button>
+                </form>
+
+                <ul className="event-list">
+                    {matchEvents.map((event) => (
+                        <li key={event.id} className="event-item">
+                            <div>
+                                <strong>{event.type}</strong> – {event.team} –{" "}
+                                {event.playerName || "Unknown player"} ({event.minute}')
+                                {event.note && <> – {event.note}</>}
+                            </div>
+                            <div className="event-actions">
+                                <button
+                                    type="button"
+                                    className="secondary-button small"
+                                    onClick={() => handleEditEvent(event)}
+                                >
+                                    Edit
+                                </button>
+                                <button
+                                    type="button"
+                                    className="danger-button small"
+                                    onClick={() => removeEvent(event.id)}
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+
+            {/* Confirmation and submission */}
+            <section className="card">
+                <div className="card-header">
+                    <h2>Confirm & submit</h2>
+                </div>
+                <div className="confirmation-status">
+                    <p>
+                        Home confirmation:{" "}
+                        <strong>{currentFixture.homeConfirmed ? "Confirmed" : "Pending"}</strong>
+                    </p>
+                    <p>
+                        Away confirmation:{" "}
+                        <strong>{currentFixture.awayConfirmed ? "Confirmed" : "Pending"}</strong>
+                    </p>
+                </div>
+                <div className="confirmation-actions">
+                    <button
+                        type="button"
+                        className="secondary-button"
+                        disabled={saving}
+                        onClick={sendConfirmationRequests}
+                    >
+                        Request team confirmation
+                    </button>
+                    <button
+                        type="button"
+                        className="primary-button"
+                        disabled={saving || !canSubmitReport}
+                        onClick={submitReport}
+                    >
+                        Submit match report
+                    </button>
+                </div>
+            </section>
+        </div>
+    );
+}
+
+export default MatchEventsPage;

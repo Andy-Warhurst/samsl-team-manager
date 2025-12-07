@@ -1,0 +1,206 @@
+/* src/features/matchEvents/matchEvents.css */
+
+.referee-screen {
+    padding: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.referee-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.fixture-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.fixture-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.fixture-card:active {
+    transform: scale(0.99);
+}
+
+.fixture-main-line {
+    font-weight: bold;
+}
+
+.fixture-teams {
+    font-weight: 600;
+}
+
+.fixture-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.fixture-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    background: #eee;
+}
+
+.badge-locked {
+    background: #d1e7dd;
+}
+
+.match-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.match-header-centre {
+    flex: 1;
+}
+
+.card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    background: #fff;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.team-selections {
+    display: flex;
+    gap: 1rem;
+}
+
+.team-column {
+    flex: 1;
+}
+
+.team-column h3 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.team-column ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.event-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.event-form-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.event-form-row label {
+    flex: 1;
+}
+
+.event-note {
+    display: block;
+}
+
+.event-note input {
+    width: 100%;
+}
+
+.event-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.event-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    border-top: 1px solid #eee;
+}
+
+.event-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.confirmation-status p {
+    margin: 0.25rem 0;
+}
+
+.confirmation-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button {
+    border-radius: 999px;
+    border: none;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.9rem;
+}
+
+.primary-button {
+    background: #007bff;
+    color: white;
+}
+
+.secondary-button {
+    background: #e2e3e5;
+    color: #000;
+}
+
+.danger-button {
+    background: #dc3545;
+    color: #fff;
+}
+
+.small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.error-text {
+    color: #b02a37;
+}
+
+/* Phone-first: everything is already single column. */
