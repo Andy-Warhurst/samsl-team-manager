@@ -20,6 +20,7 @@ import Layout from "./layouts/AppLayout";
 // NEW: referee bits
 import { RefereeProvider } from "./features/matchEvents/RefereeContext";
 import RefereeDashboard from "./features/matchEvents/RefereeDashboard";
+import CompetitionDashboard from "./features/competition/CompetitionDashboard";
 
 function App() {
     return (
@@ -49,6 +50,11 @@ function App() {
                                                     <AuthenticationGuard component={RefereeDashboard} />
                                                 }
                                             />
+                                            <Route
+                                                path="/comp"
+                                                element={<AuthenticationGuard component={CompetitionDashboard} />}
+                                            />
+
 
                                             {/* Fallback */}
                                             <Route path="*" element={<ErrorPage />} />

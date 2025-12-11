@@ -10,6 +10,7 @@ import {
     deleteMatchEvent,
     requestTeamConfirmation,
     submitMatchReport,
+    updateFixtureScore,
 } from "./refereeService";
 
 const RefereeContext = createContext();
@@ -179,6 +180,24 @@ export const RefereeProvider = ({ children }) => {
             setSaving(false);
         }
     };
+    const updateScore = async (homescore, awayscore) => {
+        if (!selectedFixtureId) return;
+        setSaving(true);
+        setError(null);
+        try {
+            const updated = await updateFixtureScore(selectedFixtureId, homescore, awayscore);
+            // Update fixtures list and current fixture with the returned data
+            setAllocatedFixtures((prev) =>
+                prev.map((f) => (f.id === updated.id ? { ...f, ...updated } : f))
+            );
+        } catch (e) {
+            console.error("Failed to update score", e);
+            setError("Failed to update score.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
 
     const value = {
         loading,
@@ -196,6 +215,7 @@ export const RefereeProvider = ({ children }) => {
         removeEvent,
         sendConfirmationRequests,
         submitReport,
+        updateScore,
     };
 
     return <RefereeContext.Provider value={value}>{children}</RefereeContext.Provider>;

@@ -1,5 +1,5 @@
 // src/features/matchEvents/MatchEventsPage.js
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useReferee } from "./RefereeContext";
 import "./matchEvents.css";
 
@@ -24,6 +24,7 @@ function MatchEventsPage() {
         removeEvent,
         sendConfirmationRequests,
         submitReport,
+        updateScore, // 👈 new from RefereeContext
     } = useReferee();
 
     const [formState, setFormState] = useState({
@@ -35,12 +36,33 @@ function MatchEventsPage() {
         note: "",
     });
 
+    const [homeScore, setHomeScore] = useState("");
+    const [awayScore, setAwayScore] = useState("");
+
+    // When the fixture changes, initialise the score fields from the fixture
+    useEffect(() => {
+        if (!currentFixture) {
+            setHomeScore("");
+            setAwayScore("");
+            return;
+        }
+        // DynamoDB stores numbers; DocumentClient gives JS numbers or strings.
+        const h = currentFixture.homescore;
+        const a = currentFixture.awayscore;
+        setHomeScore(
+            typeof h === "number" || typeof h === "string" ? String(h) : ""
+        );
+        setAwayScore(
+            typeof a === "number" || typeof a === "string" ? String(a) : ""
+        );
+    }, [currentFixture]);
+
     const canSubmitReport = useMemo(() => {
         if (!currentFixture) return false;
-        // Adjust these property names to match your API
-        const homeConfirmed = currentFixture.homeConfirmed;
-        const awayConfirmed = currentFixture.awayConfirmed;
-        return homeConfirmed && awayConfirmed;
+        return (
+            currentFixture.homeConfirmed === true &&
+            currentFixture.awayConfirmed === true
+        );
     }, [currentFixture]);
 
     if (!currentFixture) {
@@ -64,15 +86,24 @@ function MatchEventsPage() {
 
     const handleSubmitEvent = async (e) => {
         e.preventDefault();
-        if (!formState.eventType || !formState.team || !formState.minute) {
+        if (!formState.eventType || !formState.team) {
             return;
         }
+
+        let minute = null;
+        if (formState.minute !== "" && formState.minute != null) {
+            const parsed = parseInt(formState.minute, 10);
+            if (!Number.isNaN(parsed)) {
+                minute = parsed;
+            }
+        }
+
         const payload = {
             id: formState.id,
             type: formState.eventType,
             team: formState.team,
             playerName: formState.playerName || null,
-            minute: parseInt(formState.minute, 10),
+            minute: minute, // may be null/undefined, and that’s OK
             note: formState.note || null,
         };
         await addOrUpdateEvent(payload);
@@ -93,7 +124,10 @@ function MatchEventsPage() {
             eventType: event.type,
             team: event.team,
             playerName: event.playerName || "",
-            minute: String(event.minute || ""),
+            minute:
+                typeof event.minute === "number" || typeof event.minute === "string"
+                    ? String(event.minute)
+                    : "",
             note: event.note || "",
         });
     };
@@ -103,6 +137,23 @@ function MatchEventsPage() {
     };
 
     const isLocked = !!(teamSelections && teamSelections.isLocked);
+
+    const handleSaveScore = async () => {
+        if (!currentFixture) return;
+
+        // Allow empty → treat as 0, or you can choose to treat empty as null
+        const homeVal =
+            homeScore === "" || homeScore == null ? 0 : parseInt(homeScore, 10);
+        const awayVal =
+            awayScore === "" || awayScore == null ? 0 : parseInt(awayScore, 10);
+
+        if (Number.isNaN(homeVal) || Number.isNaN(awayVal)) {
+            // You could add some nicer validation/toast here
+            return;
+        }
+
+        await updateScore(homeVal, awayVal);
+    };
 
     return (
         <div className="referee-screen">
@@ -125,6 +176,52 @@ function MatchEventsPage() {
             {loading && <p>Loading match data…</p>}
             {error && <p className="error-text">{error}</p>}
 
+            {/* Score entry */}
+            <section className="card">
+                <div className="card-header">
+                    <h2>Score</h2>
+                </div>
+                <div className="event-form-row">
+                    <label>
+                        {currentFixture.hometeam}
+                        <input
+                            type="number"
+                            min="0"
+                            name="homeScore"
+                            value={homeScore}
+                            onChange={(e) => setHomeScore(e.target.value)}
+                        />
+                    </label>
+                    <span
+                        style={{
+                            alignSelf: "flex-end",
+                            paddingBottom: "0.5rem",
+                            fontWeight: "bold",
+                        }}
+                    >
+            –
+          </span>
+                    <label>
+                        {currentFixture.awayteam}
+                        <input
+                            type="number"
+                            min="0"
+                            name="awayScore"
+                            value={awayScore}
+                            onChange={(e) => setAwayScore(e.target.value)}
+                        />
+                    </label>
+                </div>
+                <button
+                    type="button"
+                    className="primary-button full-width"
+                    disabled={saving}
+                    onClick={handleSaveScore}
+                >
+                    Save score
+                </button>
+            </section>
+
             {/* Team selections */}
             <section className="card">
                 <div className="card-header">
@@ -143,26 +240,34 @@ function MatchEventsPage() {
                 {teamSelections ? (
                     <div className="team-selections">
                         <div className="team-column">
-                            <h3>{teamSelections.homeTeamName || currentFixture.hometeam}</h3>
+                            <h3>
+                                {teamSelections.homeTeamName || currentFixture.hometeam}
+                            </h3>
                             <ul>
                                 {(teamSelections.homePlayers || []).map((p) => {
-                                    const number = p.shirtno ?? p.shirtNumber ?? p.shirt_no ?? "";
+                                    const number =
+                                        p.shirtno ?? p.shirtNumber ?? p.shirt_no ?? "";
                                     return (
                                         <li key={p.id || p.playerId}>
-                                            {number} {p.name}
+                                            {number !== "" ? `#${number} ` : ""}
+                                            {p.name}
                                         </li>
                                     );
                                 })}
                             </ul>
                         </div>
                         <div className="team-column">
-                            <h3>{teamSelections.awayTeamName || currentFixture.awayteam}</h3>
+                            <h3>
+                                {teamSelections.awayTeamName || currentFixture.awayteam}
+                            </h3>
                             <ul>
                                 {(teamSelections.awayPlayers || []).map((p) => {
-                                    const number = p.shirtno ?? p.shirtNumber ?? p.shirt_no ?? "";
+                                    const number =
+                                        p.shirtno ?? p.shirtNumber ?? p.shirt_no ?? "";
                                     return (
                                         <li key={p.id || p.playerId}>
-                                            {number} {p.name}
+                                            {number !== "" ? `#${number} ` : ""}
+                                            {p.name}
                                         </li>
                                     );
                                 })}
@@ -225,7 +330,7 @@ function MatchEventsPage() {
                         </label>
 
                         <label>
-                            Minute
+                            Minute (optional)
                             <input
                                 name="minute"
                                 type="number"
@@ -234,7 +339,6 @@ function MatchEventsPage() {
                                 value={formState.minute}
                                 onChange={handleChange}
                                 placeholder="e.g. 42"
-                                required
                             />
                         </label>
                     </div>
@@ -263,7 +367,11 @@ function MatchEventsPage() {
                         <li key={event.id} className="event-item">
                             <div>
                                 <strong>{event.type}</strong> – {event.team} –{" "}
-                                {event.playerName || "Unknown player"} ({event.minute}')
+                                {event.playerName || "Unknown player"}
+                                {typeof event.minute === "number" &&
+                                    !Number.isNaN(event.minute) && (
+                                        <> ({event.minute}')</>
+                                    )}
                                 {event.note && <> – {event.note}</>}
                             </div>
                             <div className="event-actions">
@@ -295,11 +403,15 @@ function MatchEventsPage() {
                 <div className="confirmation-status">
                     <p>
                         Home confirmation:{" "}
-                        <strong>{currentFixture.homeConfirmed ? "Confirmed" : "Pending"}</strong>
+                        <strong>
+                            {currentFixture?.homeConfirmed ? "Confirmed" : "Pending"}
+                        </strong>
                     </p>
                     <p>
                         Away confirmation:{" "}
-                        <strong>{currentFixture.awayConfirmed ? "Confirmed" : "Pending"}</strong>
+                        <strong>
+                            {currentFixture?.awayConfirmed ? "Confirmed" : "Pending"}
+                        </strong>
                     </p>
                 </div>
                 <div className="confirmation-actions">

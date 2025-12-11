@@ -1,0 +1,103 @@
+/* src/features/competition/competition.css */
+
+.comp-screen {
+    padding: 1rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.comp-title {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+}
+
+.card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    background: #fff;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.fixture-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.fixture-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-top: 1px solid #eee;
+}
+
+.fixture-row:first-child {
+    border-top: none;
+}
+
+.fixture-main {
+    display: flex;
+    flex-direction: column;
+}
+
+.fixture-teams {
+    font-weight: 600;
+}
+
+.fixture-meta {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.fixture-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-end;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    background: #eee;
+}
+
+.badge-ok {
+    background: #d1e7dd;
+}
+
+.badge-alert {
+    background: #f8d7da;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+    border: 1px solid #ddd;
+    padding: 0.35rem 0.5rem;
+}
+
+.table th {
+    background: #f8f9fa;
+    text-align: left;
+}
+
+.error-text {
+    color: #b02a37;
+}

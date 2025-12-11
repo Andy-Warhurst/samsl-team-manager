@@ -63,3 +63,13 @@ export async function submitMatchReport(fixtureId) {
     );
     return response.data;
 }
+export async function updateFixtureScore(fixtureId, homescore, awayscore) {
+    const response = await axios.post(
+        `${apiBaseUrl}/referee/fixtures/${fixtureId}/score`,
+        {
+            homescore,
+            awayscore,
+        }
+    );
+    return response.data;
+}
