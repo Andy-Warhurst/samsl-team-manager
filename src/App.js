@@ -11,9 +11,9 @@ import Guests from "./features/squads/Guests";
 import AuthenticationGuard from "./auth/authentication-guard";
 
 import { FixtureProvider } from "./features/fixtures/FixtureContext";
-import { PlayerProvider } from "./features/squads/PlayerContext";
 import { GuestProvider } from "./features/squads/GuestContext";
 import { DataProvider } from "./features/squads/DataContext";
+import {TeamSheetProvider} from "./features/squads/TeamSheetContext";
 
 import Layout from "./layouts/AppLayout";
 
@@ -25,9 +25,9 @@ import CompetitionDashboard from "./features/competition/CompetitionDashboard";
 function App() {
     return (
         <FixtureProvider>
-            <PlayerProvider>
-                <GuestProvider>
-                    <DataProvider>
+            <GuestProvider>
+                <DataProvider>
+                    <TeamSheetProvider>
                         <RefereeProvider>
                             <div className="App">
                                 <Router>
@@ -63,9 +63,9 @@ function App() {
                                 </Router>
                             </div>
                         </RefereeProvider>
-                    </DataProvider>
-                </GuestProvider>
-            </PlayerProvider>
+                    </TeamSheetProvider>
+                </DataProvider>
+            </GuestProvider>
         </FixtureProvider>
     );
 }

@@ -2,7 +2,6 @@ import "./Selector.css"
 import React, {useCallback, useEffect, useState} from "react";
 import FormControl from "react-bootstrap/FormControl";
 import {useData} from "./DataContext";
-import {usePlayers} from "./PlayerContext";
 
 const Selector = () => {
 

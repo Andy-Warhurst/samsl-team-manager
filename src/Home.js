@@ -8,14 +8,12 @@ import TeamsDropdown from "./features/squads/TeamsDropdown";
 import FixtureDropdown from "./features/fixtures/FixtureDropdown";
 // import rego from "./assets/SAMSL_Register.png";
 import {useGuests} from "./features/squads/GuestContext";
-import {usePlayers} from "./features/squads/PlayerContext";
 
 function Home() {
     const {isAuthenticated, user} = useAuth0();
     const {getTeamsForUser, loading: dataLoading} = useData();
     const {fixtures, loading: fixturesLoading} = useFixtures();
     const {loading: guestsLoading} = useGuests();
-    const {loading: playersLoading} = usePlayers();
     let myTeam = "";
     let myTeams = [];
 
@@ -23,10 +21,10 @@ function Home() {
 
     useEffect(() => {
         // Check if all contexts are done loading
-        if (!fixturesLoading && !dataLoading && !guestsLoading && !playersLoading) {
+        if (!fixturesLoading && !dataLoading && !guestsLoading ) {
             setAllDataLoaded(true);
         }
-    }, [fixturesLoading, dataLoading, guestsLoading, playersLoading]);
+    }, [fixturesLoading, dataLoading, guestsLoading]);
 
     function isMoreThanOne() {
         return (myTeams.length > 1);
