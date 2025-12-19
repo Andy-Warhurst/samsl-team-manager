@@ -23,8 +23,8 @@ function MyTeam() {
                     <Col>
                         <h3>Players</h3>
                         <Guests/>
-                        <hr/>
-                        <PrintTeamsheet/>
+                        {/*<hr/>*/}
+                        {/*<PrintTeamsheet/>*/}
                         <br/>
                         <br/>
                     </Col>

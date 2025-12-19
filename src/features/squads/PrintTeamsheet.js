@@ -7,13 +7,10 @@ import { extractFixturesByRound } from "../fixtures/FixturesUtils";
 import { useFixtures } from "../fixtures/FixtureContext";
 import '../../Styles.css';
 import Button from "react-bootstrap/Button";
-import { useTeamSheet } from "../squads/TeamSheetContext";
 
 const PrintTeamsheet = () => {
     const { data, updateUserField } = useData();
     const { fixtures } = useFixtures();
-    const { submitTeamSheet, lockSheet } = useTeamSheet();
-
 
     let theRound = data.round;
     let availablePlayers = [...data.selectedPlayers]; // clone to avoid modifying context
@@ -74,20 +71,6 @@ const PrintTeamsheet = () => {
         if (a.name !== "" && b.name === "") return -1;
         return a.name.localeCompare(b.name);
     });
-
-    const handleSubmitSelections = async () => {
-        const theFixture = fixtures.filter(extractFixturesByRound(data.round, data.theTeamName));
-
-        const sheet = {
-            fixtureId: theFixture.id,
-            teamName: data.theTeamName,
-            round: data.round,
-            players: data.selectedPlayers
-        };
-
-        await submitTeamSheet(sheet);
-        //await lockSheet(); // optional: auto-lock on submit
-    };
 
     const createPdf = async (event) => {
         event.preventDefault();
@@ -210,7 +193,6 @@ const PrintTeamsheet = () => {
     return (
         <div>
             <Button onClick={createPdf}>Print Teamsheet</Button>
-            <Button onClick={handleSubmitSelections}>Submit Selections</Button>
         </div>
     );
 };

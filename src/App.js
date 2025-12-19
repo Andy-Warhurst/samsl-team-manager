@@ -11,7 +11,7 @@ import Guests from "./features/squads/Guests";
 import AuthenticationGuard from "./auth/authentication-guard";
 
 import { FixtureProvider } from "./features/fixtures/FixtureContext";
-import { GuestProvider } from "./features/squads/GuestContext";
+import { ParticipantProvider } from "./features/squads/ParticipantContext";
 import { DataProvider } from "./features/squads/DataContext";
 import {TeamSheetProvider} from "./features/squads/TeamSheetContext";
 
@@ -25,7 +25,7 @@ import CompetitionDashboard from "./features/competition/CompetitionDashboard";
 function App() {
     return (
         <FixtureProvider>
-            <GuestProvider>
+            <ParticipantProvider>
                 <DataProvider>
                     <TeamSheetProvider>
                         <RefereeProvider>
@@ -65,7 +65,7 @@ function App() {
                         </RefereeProvider>
                     </TeamSheetProvider>
                 </DataProvider>
-            </GuestProvider>
+            </ParticipantProvider>
         </FixtureProvider>
     );
 }

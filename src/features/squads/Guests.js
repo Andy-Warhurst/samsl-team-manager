@@ -5,21 +5,29 @@ import FormControl from "react-bootstrap/FormControl";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import { useData } from "./DataContext";
-import { useGuests } from './GuestContext';
+import { useParticipants } from './ParticipantContext';
 import EditableNumberButton from "../../shared/components/EditableNumberButton";
+import PrintTeamsheet from "./PrintTeamsheet";
+import {extractFixturesByRound} from "../fixtures/FixturesUtils";
+import {useFixtures} from "../fixtures/FixtureContext";
+import {useTeamSheet} from "./TeamSheetContext";
 
 function Guests() {
 
-    const { guests, deleteGuest, addGuest, updateGuest } = useGuests();
+    const { participants, deleteGuest, addGuest, updateGuest } = useParticipants();
     const [myGuests, setMyGuests] = useState([]);
     const [guestText, setGuestText] = useState('');
     const [columns, setColumns] = useState(5);
     const [columnWidth, setColumnWidth] = useState(100);
     const { data, updateUserField } = useData();
 
+
+    const { fixtures } = useFixtures();
+    const { submitTeamSheet, lockSheet } = useTeamSheet();
+
     useEffect(() => {
-        setMyGuests(guests.filter(guest => guest.team === data.theTeamName).sort((a, b) => a.name.localeCompare(b.name)));
-    }, [guests, data.theTeamName]);
+        setMyGuests(participants.filter(guest => guest.team === data.theTeamName).sort((a, b) => a.name.localeCompare(b.name)));
+    }, [participants, data.theTeamName]);
 
     const updateSelected = useCallback((player) => {
         const isAlreadySelected = data.selectedPlayers.some(p => p.id === player.id);
@@ -105,6 +113,20 @@ function Guests() {
     });
 
 
+    const handleSubmitSelections = async () => {
+        const theFixture = fixtures.filter(extractFixturesByRound(data.round, data.theTeamName));
+
+        const sheet = {
+            fixtureId: theFixture.id,
+            teamName: data.theTeamName,
+            round: data.round,
+            players: data.selectedPlayers
+        };
+
+        await submitTeamSheet(sheet);
+        //await lockSheet(); // optional: auto-lock on submit
+    };
+
 
 
     return (
@@ -150,19 +172,20 @@ function Guests() {
                                                     }}
                                                 >
                                                     {/* Badge (e.g. G for Guest) */}
-                                                    <span
-                                                        style={{
-                                                            fontSize: 10,
-                                                            fontWeight: "bold",
-                                                            padding: "2px 6px",
-                                                            borderRadius: 4,
-                                                            backgroundColor: "rgba(255,255,255,0.2)"
-                                                        }}
-                                                    >
-            G
-        </span>
+                                                        <span
+                                                            style={{
+                                                                fontSize: 10,
+                                                                fontWeight: "bold",
+                                                                padding: "2px 6px",
+                                                                borderRadius: 4,
+                                                                backgroundColor: "rgba(255,255,255,0.2)"
+                                                            }}
+                                                        >
+                                                            {p.isGuest ? "G" : "R"}
+                                                        </span>
 
                                                     {/* Delete button – stop click bubbling so it doesn't toggle selection */}
+                                                    {p.isGuest && (
                                                     <Button
                                                         variant="danger"
                                                         id={"gdelete" + p.id}
@@ -180,6 +203,7 @@ function Guests() {
                                                     >
                                                         X
                                                     </Button>
+                                                        )}
                                                 </div>
 
                                                 {/* Shirt number (in its own row, click won't toggle selection) */}
@@ -359,6 +383,10 @@ function Guests() {
                             </InputGroup>
                         </div>
                     </td>
+                </tr>
+                <tr>
+                    <Button onClick={handleSubmitSelections}>Submit Selections</Button>
+                    <PrintTeamsheet/>
                 </tr>
                 </tbody>
             </table>

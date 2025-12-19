@@ -6,7 +6,7 @@ import {useData} from "./DataContext";
 const Selector = () => {
 
     const { data, updateUserField } = useData();
-    const {players, updatePlayer} = usePlayers();
+    const {players, updatePlayer} = useParticipants();
     const [myPlayers, setMyPlayers] = useState(players);
 
     useEffect(() => {
