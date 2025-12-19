@@ -4,7 +4,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { fetchAllUserTeams } from '../../shared/api/DataService';
 import Round from "../fixtures/Round";
 
-const DataContext = createContext();
+const DataContext = createContext(undefined);
 
 export const useData = () => {
     return useContext(DataContext);
@@ -16,7 +16,6 @@ export const DataProvider = ({ children }) => {
     const { user, isAuthenticated, isLoading } = useAuth0();
 
     const userEmail = isAuthenticated ? user?.email : null;
-
 
     const [data, setData] = useState({
         userTeams: [],

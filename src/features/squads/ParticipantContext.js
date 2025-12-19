@@ -6,7 +6,7 @@ import {
     deleteParticipant,
 } from "../../shared/api/ParticipantService";
 
-const ParticipantContext = createContext();
+const ParticipantContext = createContext(undefined);
 
 export const useParticipants = () => useContext(ParticipantContext);
 

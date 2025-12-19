@@ -6,7 +6,6 @@ import About from "./About";
 import Services from "./Services";
 import ErrorPage from "./ErrorPage";
 import Guests from "./features/squads/Guests";
-// import PrintTeamsheet from "./features/squads/PrintTeamsheet";
 
 import AuthenticationGuard from "./auth/authentication-guard";
 

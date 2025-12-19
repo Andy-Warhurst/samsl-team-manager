@@ -55,6 +55,7 @@ const PrintTeamsheet = () => {
 
     const rowsToAdd = 24 - availablePlayers.length;
     for (let i = 0; i < rowsToAdd; i++) {
+        // noinspection SpellCheckingInspection
         availablePlayers.push({
             id: 99999999,
             dateofbirth: "",
@@ -157,7 +158,7 @@ const PrintTeamsheet = () => {
         // Footers
         page.drawRectangle({ x: 37, y: 10, width: 269, height: 80, borderColor: rgb(0, 0, 0), borderWidth: 1 });
         page.drawText('Teams', { x: 50, y: 74, size: 14 });
-        page.drawText('Check all information on this teamsheeet is correct.', { x: 50, y: 60, size: 10 });
+        page.drawText('Check all information on this team sheet is correct.', { x: 50, y: 60, size: 10 });
         page.drawText('Then sign above if you agree it is correct.', { x: 50, y: 48, size: 10 });
         page.drawText('SMS results to 0423 380 333 by 5:00pm.', { x: 50, y: 36, size: 10 });
 
