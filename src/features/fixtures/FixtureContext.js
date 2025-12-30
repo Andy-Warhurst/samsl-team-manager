@@ -41,7 +41,8 @@ export const FixtureProvider = ({ children }) => {
     };
 
     return (
-        <FixtureContext.Provider value={{ fixtures,
+        <FixtureContext.Provider value={{
+            fixtures,
             loading,
             addFixture: addFixtureHandler,
             updateFixture: updateFixtureHandler,

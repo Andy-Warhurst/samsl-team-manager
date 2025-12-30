@@ -37,7 +37,22 @@ export const RefereeProvider = ({ children }) => {
             setLoading(true);
             setError(null);
             try {
-                const fixtures = await fetchAllocatedFixtures(user.email);
+                let fixtures = await fetchAllocatedFixtures(user.email);
+                // fixtures = fixtures.sort((a, b) => a.round.localeCompare(b.round));
+
+                fixtures.sort((a, b) => {
+                    const roundA = Number(a.round);
+                    const roundB = Number(b.round);
+
+                    if (roundA !== roundB) {
+                        return roundA - roundB; // round first
+                    }
+
+                    // same round → sort by venue
+                    return (a.venue || "").localeCompare(b.venue || "");
+                });
+
+
                 setAllocatedFixtures(fixtures || []);
             } catch (e) {
                 console.error("Failed to load referee fixtures", e);

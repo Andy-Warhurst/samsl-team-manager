@@ -1,6 +1,6 @@
 import {useAuth0} from "@auth0/auth0-react";
 import * as React from "react";
-import MyTeam from "./features/squads/MyTeam";
+import ManagerDashboard from "./features/squads/ManagerDashboard";
 import {useEffect, useState} from "react";
 import {useFixtures} from "./features/fixtures/FixtureContext";
 import {useData} from "./features/squads/DataContext";
@@ -8,12 +8,14 @@ import TeamsDropdown from "./features/squads/TeamsDropdown";
 import FixtureDropdown from "./features/fixtures/FixtureDropdown";
 // import rego from "./assets/SAMSL_Register.png";
 import {useParticipants} from "./features/squads/ParticipantContext";
+import {useTeamSheet} from "./features/squads/TeamSheetContext";
 
 function Home() {
     const {isAuthenticated, user} = useAuth0();
     const {getTeamsForUser, loading: dataLoading} = useData();
     const {fixtures, loading: fixturesLoading} = useFixtures();
     const {loading: guestsLoading} = useParticipants();
+    const {loading: teamSheetsLoading} = useTeamSheet();
     let myTeam = "";
     let myTeams = [];
 
@@ -21,10 +23,10 @@ function Home() {
 
     useEffect(() => {
         // Check if all contexts are done loading
-        if (!fixturesLoading && !dataLoading && !guestsLoading ) {
+        if (!fixturesLoading && !dataLoading && !guestsLoading && !teamSheetsLoading) {
             setAllDataLoaded(true);
         }
-    }, [fixturesLoading, dataLoading, guestsLoading]);
+    }, [fixturesLoading, dataLoading, guestsLoading,teamSheetsLoading]);
 
     function isMoreThanOne() {
         return (myTeams.length > 1);
@@ -70,7 +72,7 @@ function Home() {
                         </div>
                     {/*</div>*/}
 
-                    <MyTeam
+                    <ManagerDashboard teams={myTeams}
                     />
                 </>
 

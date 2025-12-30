@@ -176,10 +176,97 @@ function MatchEventsPage() {
             {loading && <p>Loading match data…</p>}
             {error && <p className="error-text">{error}</p>}
 
+
+
+            {/* Team selections */}
+            <section className="card">
+                <div className="card-header">
+                    <h2>Teams</h2>
+                    {!isLocked && (
+                        <button
+                            className="primary-button"
+                            disabled={saving}
+                            onClick={lockSelections}
+                        >
+                            Lock team sheets
+                        </button>
+                    )}
+                    {isLocked && <span className="badge badge-locked">Locked</span>}
+                </div>
+                {teamSelections ? (
+                    <div className="team-selections">
+                        <div className="team-column">
+                            <h3>
+                                {teamSelections.homeTeamName || currentFixture.hometeam}
+                            </h3>
+                            <ul>
+                                {(teamSelections.homePlayers || [])
+                                    .slice() // copy so we don’t mutate state
+                                    .sort((a, b) => {
+                                        const aNum = parseInt(a.shirtno ?? a.shirtNumber ?? a.shirt_no, 10);
+                                        const bNum = parseInt(b.shirtno ?? b.shirtNumber ?? b.shirt_no, 10);
+
+                                        // Put players with no number at the end
+                                        if (Number.isNaN(aNum) && Number.isNaN(bNum)) return 0;
+                                        if (Number.isNaN(aNum)) return 1;
+                                        if (Number.isNaN(bNum)) return -1;
+
+                                        return aNum - bNum;
+                                    })
+                                    .map((p) => {
+                                        const number =
+                                            p.shirtno ?? p.shirtNumber ?? p.shirt_no ?? "";
+
+                                        return (
+                                            <li key={p.id || p.playerId}>
+                                                {number !== "" ? `${number} - ` : "? - "}
+                                                {p.name}
+                                            </li>
+                                        );
+                                    })}
+                            </ul>
+                        </div>
+                        <div className="team-column">
+                            <h3>
+                                {teamSelections.awayTeamName || currentFixture.awayteam}
+                            </h3>
+                            <ul>
+                                {(teamSelections.awayPlayers || [])
+                                    .slice() // copy so we don’t mutate state
+                                    .sort((a, b) => {
+                                        const aNum = parseInt(a.shirtno ?? a.shirtNumber ?? a.shirt_no, 10);
+                                        const bNum = parseInt(b.shirtno ?? b.shirtNumber ?? b.shirt_no, 10);
+
+                                        // Put players with no number at the end
+                                        if (Number.isNaN(aNum) && Number.isNaN(bNum)) return 0;
+                                        if (Number.isNaN(aNum)) return 1;
+                                        if (Number.isNaN(bNum)) return -1;
+
+                                        return aNum - bNum;
+                                    })
+                                    .map((p) => {
+                                        const number =
+                                            p.shirtno ?? p.shirtNumber ?? p.shirt_no ?? "";
+
+                                        return (
+                                            <li key={p.id || p.playerId}>
+                                                {number !== "" ? `${number} - ` : "? - "}
+                                                {p.name}
+                                            </li>
+                                        );
+                                    })}
+                            </ul>
+                        </div>
+                    </div>
+                ) : (
+                    <p>No team selections available.</p>
+                )}
+            </section>
+
             {/* Score entry */}
             <section className="card">
                 <div className="card-header">
-                    <h2>Score</h2>
+                    <h2>Result</h2>
                 </div>
                 <div className="event-form-row">
                     <label>
@@ -222,67 +309,10 @@ function MatchEventsPage() {
                 </button>
             </section>
 
-            {/* Team selections */}
-            <section className="card">
-                <div className="card-header">
-                    <h2>Team selections</h2>
-                    {!isLocked && (
-                        <button
-                            className="primary-button"
-                            disabled={saving}
-                            onClick={lockSelections}
-                        >
-                            Lock team sheets
-                        </button>
-                    )}
-                    {isLocked && <span className="badge badge-locked">Locked</span>}
-                </div>
-                {teamSelections ? (
-                    <div className="team-selections">
-                        <div className="team-column">
-                            <h3>
-                                {teamSelections.homeTeamName || currentFixture.hometeam}
-                            </h3>
-                            <ul>
-                                {(teamSelections.homePlayers || []).map((p) => {
-                                    const number =
-                                        p.shirtno ?? p.shirtNumber ?? p.shirt_no ?? "";
-                                    return (
-                                        <li key={p.id || p.playerId}>
-                                            {number !== "" ? `#${number} ` : ""}
-                                            {p.name}
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </div>
-                        <div className="team-column">
-                            <h3>
-                                {teamSelections.awayTeamName || currentFixture.awayteam}
-                            </h3>
-                            <ul>
-                                {(teamSelections.awayPlayers || []).map((p) => {
-                                    const number =
-                                        p.shirtno ?? p.shirtNumber ?? p.shirt_no ?? "";
-                                    return (
-                                        <li key={p.id || p.playerId}>
-                                            {number !== "" ? `#${number} ` : ""}
-                                            {p.name}
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </div>
-                    </div>
-                ) : (
-                    <p>No team selections available.</p>
-                )}
-            </section>
-
             {/* Event entry */}
             <section className="card">
                 <div className="card-header">
-                    <h2>Match events</h2>
+                    <h2>Match Events</h2>
                 </div>
                 <form className="event-form" onSubmit={handleSubmitEvent}>
                     <div className="event-form-row">

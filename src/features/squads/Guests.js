@@ -1,194 +1,245 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import "../../Guests.css";
-import InputGroup from "react-bootstrap/InputGroup";
-import FormControl from "react-bootstrap/FormControl";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
+import InputGroup from "react-bootstrap/InputGroup";
+import FormControl from "react-bootstrap/FormControl";
+
 import { useData } from "./DataContext";
-import { useParticipants } from './ParticipantContext';
+import { useParticipants } from "./ParticipantContext";
+import { useTeamSheet } from "./TeamSheetContext";
 import EditableNumberButton from "../../shared/components/EditableNumberButton";
-import PrintTeamsheet from "./PrintTeamsheet";
-import {extractFixturesByRound} from "../fixtures/FixturesUtils";
-import {useFixtures} from "../fixtures/FixtureContext";
-import {useTeamSheet} from "./TeamSheetContext";
 
-function Guests() {
+function Guests({ team }) {
+    const { data } = useData(); // round still comes from DataContext
+    const round = data.round ?? "1";
 
-    const { participants, deleteGuest, addGuest, updateGuest } = useParticipants();
-    const [myGuests, setMyGuests] = useState([]);
-    const [guestText, setGuestText] = useState('');
     const [columns, setColumns] = useState(5);
     const [columnWidth, setColumnWidth] = useState(100);
-    const { data, updateUserField } = useData();
 
+    const { participants, addGuest, updateParticipant, deleteGuest } = useParticipants();
+    const { loadTeamSheet, saveTeamSheet } = useTeamSheet();
 
-    const { fixtures } = useFixtures();
-    const { submitTeamSheet, lockSheet } = useTeamSheet();
+    const [guestText, setGuestText] = useState("");
 
+    // Local selection state (do NOT store in DataContext)
+    const [selectedIds, setSelectedIds] = useState(() => new Set());
+
+    // Keep the loaded team sheet around (optional, but handy)
+    const [teamSheet, setTeamSheet] = useState(null);
+    const [loadingSheet, setLoadingSheet] = useState(false);
+
+    // Filter participants to only those belonging to this team
+    const myParticipants = useMemo(() => {
+        return (participants || [])
+            .filter((p) => p.team === team)
+            .slice()
+            .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    }, [participants, team]);
+
+    // Build a map for quick lookup from id -> participant
+    const participantById = useMemo(() => {
+        const map = new Map();
+        myParticipants.forEach((p) => map.set(p.id, p));
+        return map;
+    }, [myParticipants]);
+
+    // Load team sheet whenever team OR round changes, and preselect
     useEffect(() => {
-        setMyGuests(participants.filter(guest => guest.team === data.theTeamName).sort((a, b) => a.name.localeCompare(b.name)));
-    }, [participants, data.theTeamName]);
+        let cancelled = false;
 
-    const updateSelected = useCallback((player) => {
-        const isAlreadySelected = data.selectedPlayers.some(p => p.id === player.id);
+        async function load() {
+            if (!team || !round) return;
 
-        const updatedSelections = isAlreadySelected
-            ? data.selectedPlayers.filter(p => p.id !== player.id)
-            : [...data.selectedPlayers, player];
+            setLoadingSheet(true);
+            try {
+                const sheet = await loadTeamSheet(team, String(round));
+                if (cancelled) return;
 
-        updateUserField('selectedPlayers', updatedSelections);
-    }, [data.selectedPlayers, updateUserField]);
+                setTeamSheet(sheet);
 
+                const ids = new Set();
+                (sheet?.players || []).forEach((p) => {
+                    if (p?.id != null) ids.add(p.id);
+                });
+                setSelectedIds(ids);
+            } catch (e) {
+                if (cancelled) return;
+                console.error("Failed to load team sheet", e);
+                setTeamSheet(null);
+                setSelectedIds(new Set()); // safe fallback
+            } finally {
+                if (!cancelled) setLoadingSheet(false);
+            }
+        }
 
-    // const updateShirtNumber = useCallback((guest, number) => {
-    //     updateGuest({ ...guest, shirtno: number });
-    // },[updateGuest]);  //
+        load();
+        return () => {
+            cancelled = true;
+        };
+    }, [team, round, loadTeamSheet]);
+
+        useEffect(() => {
+        const updateColumns = () => {
+            const cols = window.innerWidth < 768 ? 3 : 6;
+            setColumns(cols);
+            setColumnWidth((window.innerWidth / cols) - (cols * 3));
+        };
+
+        updateColumns();
+        window.addEventListener("resize", updateColumns);
+        return () => window.removeEventListener("resize", updateColumns);
+    }, []);
+
+    const toggleSelected = useCallback((p) => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(p.id)) next.delete(p.id);
+            else next.add(p.id);
+            return next;
+        });
+    }, []);
 
     const updateShirtNumber = useCallback(
-        (guest, number) => {
-            // Optimistic local update
-            setMyGuests(prev =>
-                prev.map(g =>
-                    g.id === guest.id ? { ...g, shirtno: number } : g
-                )
-            );
-
-            // Persist in your backing store / context
-            updateGuest({ ...guest, shirtno: number });
+        (p, number) => {
+            // Persist. (Local UI will show updated value on next participants refresh.)
+            updateParticipant({ ...p, shirtno: number });
         },
-        [updateGuest]
+        [updateParticipant]
     );
 
-    // const incrementStat = useCallback(
-    //     (guest, field) => {
-    //         const updatedGuest = {
-    //             ...guest,
-    //             [field]: (guest[field] ?? 0) + 1,
-    //         };
-    //
-    //         // Optimistic local update
-    //         setMyGuests(prev =>
-    //             prev.map(g => (g.id === guest.id ? updatedGuest : g))
-    //         );
-    //
-    //         // Persist via your existing context/API
-    //         updateGuest(updatedGuest);
-    //     },
-    //     [updateGuest]
-    // );
+    const deleteGuestById = useCallback(
+        async (id) => {
+            await deleteGuest(id);
+            setSelectedIds((prev) => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        },
+        [deleteGuest]
+    );
 
-    const deleteGuestById = useCallback(async (id) => {
-        await deleteGuest(id);
-        setMyGuests(prevGuests => prevGuests.filter(guest => guest.id !== id));
-    }, [deleteGuest]);
-
-    const addNewGuest = useCallback(async (name, team, shirtno) => {
-        try {
-            // const theId = nextId();
-            const theId = crypto.randomUUID().toString();
-            const newGuest = { id: theId, name, team, shirtno };
-            setMyGuests(prevGuests => [...prevGuests, newGuest]);
+    const addNewGuest = useCallback(
+        async (name, teamName, shirtno) => {
+            if (!name?.trim()) return;
+            const newGuest = {
+                id: crypto.randomUUID().toString(),
+                name: name.trim(),
+                team: teamName,
+                shirtno: shirtno ?? "",
+                isGuest: true,
+            };
             await addGuest(newGuest);
-        } catch (error) {
-            console.error(error);
-        }
-    }, [addGuest]);
+            setGuestText("");
+        },
+        [addGuest]
+    );
 
-
-    useEffect(() => {
-        const updateColumns = () => {
-            // tweak breakpoint as you like (e.g. 768, 576, etc.)
-            if (window.innerWidth < 768) {
-                setColumns(3);
-            } else {
-                setColumns(6);
+    const selectedPlayersArray = useMemo(() => {
+        // Convert selected IDs to player objects (only those we can find locally)
+        const selected = [];
+        selectedIds.forEach((id) => {
+            const p = participantById.get(id);
+            if (p) {
+                selected.push({
+                    id: p.id,
+                    isGuest: !!p.isGuest,
+                    name: p.name,
+                    shirtno: p.shirtno ?? "",
+                    team: p.team,
+                });
             }
-            setColumnWidth((window.innerWidth / columns) - (columns * 3));
-        };
+        });
+        // Sort for stable storage/display
+        selected.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        return selected;
+    }, [selectedIds, participantById]);
 
-        updateColumns(); // run once on mount
-        window.addEventListener("resize", updateColumns);
-
-        return () => window.removeEventListener("resize", updateColumns);
-    });
-
-
-    const handleSubmitSelections = async () => {
-        const theFixture = fixtures.filter(extractFixturesByRound(data.round, data.theTeamName));
-
+    const handleSubmitSelections = useCallback(async () => {
+        // Create/upsert the team sheet for this team + round
         const sheet = {
-            fixtureId: theFixture.id,
-            teamName: data.theTeamName,
-            round: data.round,
-            players: data.selectedPlayers
+            // id optional if Lambda generates UUID; include if you already have it:
+            id: teamSheet?.id,
+            teamName: team,
+            round: String(round),
+            players: selectedPlayersArray,
+
+            // workflow flags
+            submitted: true,
+            submittedAt: new Date().toISOString(),
         };
 
-        await submitTeamSheet(sheet);
-        //await lockSheet(); // optional: auto-lock on submit
-    };
-
+        try {
+            const saved = await saveTeamSheet(sheet);
+            setTeamSheet(saved); // keep local copy updated
+        } catch (e) {
+            console.error("Failed to submit team sheet", e);
+            alert("Failed to submit team sheet.");
+        }
+    }, [team, round, selectedPlayersArray, saveTeamSheet, teamSheet?.id]);
 
 
     return (
         <div className="guest-page">
+            <h3>Players – {team} (Round {round})</h3>
+
+                {loadingSheet && <div style={{ marginBottom: 8 }}>Loading team sheet…</div>}
+
+
             <table className="guest-selector-table">
                 <tbody>
-                {Array.from(
-                    { length: Math.ceil(myGuests.length / columns) },  // number of rows
-                    (_, rowIndex) => (
-                        <tr key={rowIndex}>
-                            {myGuests
-                                .slice(rowIndex * columns, rowIndex * columns + columns)   // up to 5 guests per row
-                                .map(p => {
-                                    const isSelected = data.selectedPlayers.some(sp => sp.id === p.id);
+                {Array.from({ length: Math.ceil(myParticipants.length / columns) }, (_, rowIndex) => (
+                    <tr key={rowIndex}>
+                        {myParticipants
+                            .slice(rowIndex * columns, rowIndex * columns + columns)
+                            .map((p) => {
+                                const isSelected = selectedIds.has(p.id);
 
-                                    return (
-                                        <td key={p.id}>
-
-
-                                            <Card
-                                                onClick={() => updateSelected(p)}
+                                return (
+                                    <td key={p.id}>
+                                        <Card
+                                            onClick={() => toggleSelected(p)}
+                                            style={{
+                                                width: columnWidth,
+                                                height: "120px",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                padding: 4,
+                                                borderRadius: 8,
+                                                cursor: "pointer",
+                                                backgroundColor: isSelected ? "darkgreen" : "blue",
+                                                color: "white",
+                                                boxSizing: "border-box",
+                                            }}
+                                        >
+                                            {/* Header */}
+                                            <div
                                                 style={{
-                                                    width: columnWidth,
-                                                    height: "120px",
                                                     display: "flex",
-                                                    flexDirection: "column",
-                                                    padding: 4,
-                                                    borderRadius: 8,
-                                                    cursor: "pointer",
-                                                    backgroundColor: isSelected ? "darkgreen" : "blue",
-                                                    color: "white",
-                                                    boxSizing: "border-box"
+                                                    alignItems: "center",
+                                                    justifyContent: "space-between",
+                                                    width: "100%",
+                                                    marginBottom: 4,
                                                 }}
                                             >
-                                                {/* Header: badge + delete button */}
-                                                <div
+                                                {/* P/G badge */}
+                                                <span
                                                     style={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "space-between",
-                                                        width: "100%",
-                                                        marginBottom: 4
+                                                        fontSize: 10,
+                                                        fontWeight: "bold",
+                                                        padding: "2px 6px",
+                                                        borderRadius: 4,
+                                                        backgroundColor: "rgba(255,255,255,0.2)",
                                                     }}
                                                 >
-                                                    {/* Badge (e.g. G for Guest) */}
-                                                        <span
-                                                            style={{
-                                                                fontSize: 10,
-                                                                fontWeight: "bold",
-                                                                padding: "2px 6px",
-                                                                borderRadius: 4,
-                                                                backgroundColor: "rgba(255,255,255,0.2)"
-                                                            }}
-                                                        >
-                                                            {p.isGuest ? "G" : "R"}
-                                                        </span>
+                            {p.isGuest ? "G" : "P"}
+                          </span>
 
-                                                    {/* Delete button – stop click bubbling so it doesn't toggle selection */}
-                                                    {p.isGuest && (
+                                                {/* Delete only if guest */}
+                                                {p.isGuest && (
                                                     <Button
                                                         variant="danger"
-                                                        id={"gdelete" + p.id}
                                                         size="sm"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -198,201 +249,101 @@ function Guests() {
                                                             fontSize: "10px",
                                                             lineHeight: 1,
                                                             padding: "0 6px",
-                                                            height: "18px"
+                                                            height: "18px",
                                                         }}
                                                     >
                                                         X
                                                     </Button>
-                                                        )}
-                                                </div>
+                                                )}
+                                            </div>
 
-                                                {/* Shirt number (in its own row, click won't toggle selection) */}
+                                            {/* Shirt number */}
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    gap: 4,
+                                                    width: "100%",
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <EditableNumberButton
+                                                    value={p.shirtno}
+                                                    onCommit={(newNo) => updateShirtNumber(p, newNo)}
+                                                    buttonStyle={{
+                                                        fontSize: "10px",
+                                                        padding: "0 6px",
+                                                        minWidth: "32px",
+                                                        textAlign: "centre",
+                                                    }}
+                                                    buttonVariant="light"
+                                                />
+                                            </div>
+
+                                            {/* Name */}
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    alignItems: "flex-start",
+                                                    justifyContent: "space-between",
+                                                    flex: 1,
+                                                    width: "100%",
+                                                }}
+                                            >
                                                 <div
                                                     style={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                        gap: 4,
-                                                        width: "100%"
-                                                    }}
-                                                    onClick={(e) => e.stopPropagation()} // don't trigger card selection
-                                                >
-                                                        {/*<span*/}
-                                                        {/*    style={{*/}
-                                                        {/*        fontSize: 14*/}
-                                                        {/*    }}*/}
-                                                        {/*>No.</span>*/}
-
-                                                    <EditableNumberButton
-                                                        value={p.shirtno}
-                                                        onCommit={(newNo) => updateShirtNumber(p, newNo)}
-                                                        buttonStyle={{
-                                                            fontSize: "10px",
-                                                            padding: "0 6px",
-                                                            minWidth: "32px",
-                                                            textAlign: "centre"
-                                                        }}
-                                                        buttonVariant="light"
-                                                    />
-                                                </div>
-
-                                                {/* Body: name + shirt number */}
-                                                <div
-                                                    style={{
-                                                        display: "flex",
-                                                        flexDirection: "column",
-                                                        alignItems: "flex-start",
-                                                        justifyContent: "space-between",
-                                                        flex: 1,
-                                                        width: "100%"
+                                                        width: "100%",
+                                                        fontSize: 11,
+                                                        fontWeight: "bold",
+                                                        marginBottom: 4,
+                                                        textAlign: "center",
+                                                        maxWidth: "100%",
+                                                        whiteSpace: "normal",
+                                                        overflow: "visible",
+                                                        textOverflow: "clip",
                                                     }}
                                                 >
-                                                    {/* Player name */}
-                                                    <div
-                                                        style={{
-                                                            width: "100%",
-                                                            fontSize: 11,
-                                                            fontWeight: "bold",
-                                                            marginBottom: 4,
-                                                            textAlign: "center",
-                                                            maxWidth: "100%",
-                                                            // whiteSpace: "nowrap",
-                                                            // overflow: "hidden",
-                                                            // textOverflow: "ellipsis"
-                                                            whiteSpace: "normal",
-                                                            overflow: "visible",
-                                                            textOverflow: "clip"
-
-                                                        }}
-                                                    >
-                                                        {p.name}
-                                                    </div>
-
-
+                                                    {p.name}
                                                 </div>
-
-                                                {/*/!* Footer: Y / R / G buttons + counts *!/*/}
-                                                {/*<div*/}
-                                                {/*    style={{*/}
-                                                {/*        display: "flex",*/}
-                                                {/*        justifyContent: "space-between",*/}
-                                                {/*        alignItems: "centre",*/}
-                                                {/*        width: "100%",*/}
-                                                {/*        marginTop: 6,*/}
-                                                {/*        gap: 4,*/}
-                                                {/*    }}*/}
-                                                {/*    onClick={(e) => e.stopPropagation()} // don’t toggle card selection*/}
-                                                {/*>*/}
-                                                {/*    /!* Yellow cards *!/*/}
-                                                {/*    <div style={{ display: "flex", alignItems: "centre", gap: 2 }}>*/}
-                                                {/*        <Button*/}
-                                                {/*            variant="warning"*/}
-                                                {/*            size="lg"*/}
-                                                {/*            style={{*/}
-                                                {/*                padding: "0 6px",*/}
-                                                {/*                fontSize: 14,*/}
-                                                {/*                lineHeight: 1.1,*/}
-                                                {/*            }}*/}
-                                                {/*            onClick={(e) => {*/}
-                                                {/*                e.stopPropagation();*/}
-                                                {/*                incrementStat(p, "yellows");*/}
-                                                {/*            }}*/}
-                                                {/*        >*/}
-                                                {/*            Y*/}
-                                                {/*        </Button>*/}
-                                                {/*        <span style={{ fontSize: 14 }}>{p.yellows ?? 0}</span>*/}
-                                                {/*    </div>*/}
-
-                                                {/*    /!* Red cards *!/*/}
-                                                {/*    <div style={{ display: "flex", alignItems: "centre", gap: 2 }}>*/}
-                                                {/*        <Button*/}
-                                                {/*            variant="danger"*/}
-                                                {/*            size="lg"*/}
-                                                {/*            style={{*/}
-                                                {/*                padding: "0 6px",*/}
-                                                {/*                fontSize: 14,*/}
-                                                {/*                lineHeight: 1.1,*/}
-                                                {/*            }}*/}
-                                                {/*            onClick={(e) => {*/}
-                                                {/*                e.stopPropagation();*/}
-                                                {/*                incrementStat(p, "reds");*/}
-                                                {/*            }}*/}
-                                                {/*        >*/}
-                                                {/*            R*/}
-                                                {/*        </Button>*/}
-                                                {/*        <span style={{ fontSize: 14 }}>{p.reds ?? 0}</span>*/}
-                                                {/*    </div>*/}
-
-                                                {/*    /!* Goals *!/*/}
-                                                {/*    <div style={{ display: "flex", alignItems: "centre", gap: 2 }}>*/}
-                                                {/*        <Button*/}
-                                                {/*            variant="success"*/}
-                                                {/*            size="lg"*/}
-                                                {/*            style={{*/}
-                                                {/*                padding: "0 6px",*/}
-                                                {/*                fontSize: 14,*/}
-                                                {/*                lineHeight: 1.1,*/}
-                                                {/*            }}*/}
-                                                {/*            onClick={(e) => {*/}
-                                                {/*                e.stopPropagation();*/}
-                                                {/*                incrementStat(p, "goals");*/}
-                                                {/*            }}*/}
-                                                {/*        >*/}
-                                                {/*            G*/}
-                                                {/*        </Button>*/}
-                                                {/*        <span style={{ fontSize: 14 }}>{p.goals ?? 0}</span>*/}
-                                                {/*    </div>*/}
-                                                {/*</div>*/}
-
-                                            </Card>
-
-                                        </td>
-                                    );
-                                })}
-                        </tr>
-                    )
-                ) }
-
-                </tbody>
-
-            </table>
-            <table>
-                <tbody>
-                <tr>
-                    <td style={{
-                        width: "200px"}}>
-                        <div>
-                            <label htmlFor="guestname">Name:</label>
-                            <InputGroup>
-                                <FormControl
-                                    placeholder="Guest's Name"
-                                    aria-label="Guest's Name"
-                                    aria-describedby="basic-addon2"
-                                    id="guestname"
-                                    style={{
-                                        fontSize: 12,
-                                        width: "100px"}}
-                                    value={guestText}
-                                    onChange={(e) => setGuestText(e.target.value)} />
-                                <Button
-                                    variant="primary"
-                                    style={{ fontSize: 12 }}
-                                    onClick={() => addNewGuest(guestText, data.theTeamName, '')} >
-                                    Add
-                                </Button>
-                            </InputGroup>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <Button onClick={handleSubmitSelections}>Submit Selections</Button>
-                    <PrintTeamsheet/>
-                </tr>
+                                            </div>
+                                        </Card>
+                                    </td>
+                                );
+                            })}
+                    </tr>
+                ))}
                 </tbody>
             </table>
 
+            <div style={{ marginTop: 10 }}>
+                <label htmlFor="guestname">Name:</label>
+                <InputGroup>
+                    <FormControl
+                        placeholder="Guest's Name"
+                        id="guestname"
+                        style={{ fontSize: 12, width: "100px" }}
+                        value={guestText}
+                        onChange={(e) => setGuestText(e.target.value)}
+                    />
+                    <Button
+                        variant="primary"
+                        style={{ fontSize: 12 }}
+                        onClick={() => addNewGuest(guestText, team, "")}
+                    >
+                        Add
+                    </Button>
+                </InputGroup>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+                <Button onClick={handleSubmitSelections}>Submit Selections</Button>{" "}
+                {/*<PrintTeamsheet />*/}
+            </div>
         </div>
     );
 }
 
 export default Guests;
+

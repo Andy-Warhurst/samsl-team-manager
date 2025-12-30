@@ -5,7 +5,7 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Guests from "./Guests";
 
-function MyTeam() {
+function ManagerDashboard( { teams }) {
 
     return (
 
@@ -13,8 +13,7 @@ function MyTeam() {
             <Container>
                 <Row>
                     <Col>
-                        <h3>Players</h3>
-                        <Guests/>
+                        <Guests team={teams[0]}/>
                         <br/>
                         <br/>
                     </Col>
@@ -28,4 +27,4 @@ function MyTeam() {
 
 }
 
-export default MyTeam;
+export default ManagerDashboard;
